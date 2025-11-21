@@ -1,0 +1,179 @@
+%% 
+% ADVANCED NUMERICAL METHODS AND ALGORITHM COMPARISON
+
+%----PART 1a: RECURSIVE NUMERICAL METHOD----
+% Projectile problem : h(t) = 20 + 40t - 6t^2, find when t when h(t)=0
+f = @(t) 20 + 40*t - 6*t.^2;
+a = 0; b = 5; tol = 1e-6;
+tic
+root_recursive = recursiveBisection(f, a, b, tol);
+time_recursive_bisect = toc;
+fprintf('--- Recursive Bisection Method---\n');
+fprintf('Root found at t = %.6f s (time = %.6f s)\n\n', root_recursive,time_recursive_bisect);
+% Plot function curve and root
+t_vals = linspace(0, 5, 200);
+figure;
+plot(t_vals, f(t_vals),'b-','LineWidth',2);
+hold on;
+yline(0, 'k--', 'LineWidth',1);
+plot(root_recursive, 0, 'ro', 'MarkerFaceColor','r');
+xlabel('Time (s)');
+ylabel('Height (m)');
+title('Projectile Motion: Recursive Bisection Root Finding');
+legend('h(t)', 'Ground (h=0)', 'Root found');
+grid on;
+ %---- PART 1b: FIBONACCI COMPARISON ---- 
+ N_values = 5:5:35; % Different Fibonacci terms
+ timeRec = zeros(size(N_values));
+ timeDP = zeros(size(N_values));
+ fibRecVals = zeros(size(N_values));
+ fibDPVals = zeros(size(N_values));
+ for i = 1 : length(N_values)
+     n = N_values(i);
+     tic;
+     fibRecVals(i) = fibRec(n);
+     timeRec(i) = toc;
+     tic;
+     fibDPVals(i) = fibDP(n);
+     timeDP(i) = toc;
+ end
+ % Plot Fibonacci computation time figure;
+ plot(N_values, timeRec, 'r-o', 'LineWidth',2);
+ hold on;
+ plot(N_values, timeDP, 'b-s', 'LineWidth',2);
+ xlabel('n (Fibonacci Term)');
+ ylabel('Computation Time(s)');
+ title('Fibonacci: Recursive vs Dynamic Programming');
+ legend('Recursive', 'Dynamic Programming', 'Location','northwest');
+ grid on;
+ 
+ % Plot Fibonacci growth pattern figure;
+ plot (N_values,fibRecVals,'m-o', 'LineWidth',2);
+ hold on;
+ plot(N_values, fibDPVals, 'g-s', 'LineWidth',2);
+ xlabel('n (Fibonacci Term)');
+ ylabel('F(n)');
+ title('Fibonacci Sequence Values: Recursive vs Dynamic');
+ legend('Recursive', 'Dynamic');
+ grid on;
+
+fprintf('--- Fibonacci Results ---\n');
+disp(table(N_values', fibRecVals', timeRec', fibDPVals', timeDP','VariableNames',{'n', 'FibRec', 'TimeRec', 'FibDP', 'TimeDP'}));
+
+% ---- PART 1c: KNAPSACK COMPARISON ----
+values = [60, 100, 120];
+weights = [10, 20, 30];
+W_values = 10:10:60;
+timeKnapRec = zeros(size(W_values));
+timeKnapDP = zeros(size(W_values));
+valRec = zeros(size(W_values));
+valDP = zeros(size(W_values));
+for i = 1:length(W_values)
+    W = W_values(i);
+    tic;
+    valRec(i) = knapSackRec(W, weights, values, length(values));
+    timeKnapRec(i) = toc;
+
+    tic;
+    valDP(i) = knapSackDP(W, weights, values);
+    timeKnapDP(i) =toc;
+end
+
+fprintf('\n--- Knapsack Results ---\n');
+disp(table(W_values', valRec', timeKnapRec', valDP', timeKnapDP', 'VariableNames',{'Capacity','RecValue', 'RecTime', 'DPValue', 'DPTime'}));
+
+%Plot computation time comparison figure;
+plot(W_values, timeKnapRec, 'r-o', 'LineWidth',2);
+hold on;
+plot(W_values, timeKnapDP, 'b-s', 'LineWidth',2);
+xlabel('Knapsack Cpacity (w)');
+ylabel('Computation Time(s)');
+title('Knapsack: Recursive vs Dynamic Programming');
+legend('Recursive', 'Dynamic Programming', 'Location','northwest');
+grid on;
+
+% Plot result value comparison figure;
+plot(W_values, valRec, 'ro--', 'LineWidth',2);
+hold on;
+plot(W_values, valRec, 'ro--', 'LineWidth',2);
+xlabel('KnapSack Capacity (W)');
+ylabel('Maximum Value');
+title('Knapsack: Value Comparison');
+legend('Recursive', 'Dynamic Programming');
+grid on;
+
+%---- PART 1d: BAR GRAPH ----
+avgTimeRec = [time_recursive_bisect, mean(timeRec), mean(timeKnapRec)];
+avgTimeDP = [0, mean(timeDP), mean(timeKnapDP)];
+% DP not used in bisection
+methods = {'Bisection (Rec)', 'Fibonacci', 'Knapsack'};
+figure;
+barData = [avgTimeRec; avgTimeDP]';
+bar(barData);
+xlabel('Problem Type');
+ylabel('Average Computation Time(s)');
+title('Computation Time Comparison Summary');
+legend('Recursive', 'Dynamic Programming', 'Location', 'northwest');
+set(gca, 'XTickLabel', methods);
+grid on;
+
+% ---- FUNCTIONS DEFINITIONS ----
+% Recursive Bisection Meethod
+function root = recursiveBisection(f, a, b, tol)
+        c = (a + b) / 2;
+        if abs(f(c)) < tol || abs(b - a)/2 < tol
+            root = c;
+            return;
+        end
+        if f(a) * f(c) < 0
+            root = recursiveBisection(f, a, c, tol);
+        else
+            root = recursiveBisection(f, c, b, tol);
+        end
+end
+% Recursive Fibonacci
+function f = fibRec(n)
+      if n <= 2
+          f = 1;
+      else
+          f = fibRec(n-1) + fibRec(n-2);
+      end
+end
+%Dynamic Fibonacci
+function f = fibDP(n)
+    fib = zeros(1,n);
+    fib(1) = 1; fib(2) = 1;
+    for i = 3:n
+        fib(i) = fib(i-1) + fib(i-2);
+    end
+    f = fib(n);
+end
+%Recursive Knapsack
+function val = knapSackRec(W, wt, valArr, n)
+    if n == 0 || W == 0
+        val = 0;
+        return;
+    end
+    if wt(n) > W
+        val = knapSackRec(W, wt, valArr, n-1);
+    else
+        val = max(valArr(n) + knapSackRec(W - wt(n), wt, valArr, n-1),knapSackRec(W, wt, valArr, n-1));
+    end
+end
+% Dynamic Knapsack
+function maxVal = knapSackDP(W, wt, valArr)
+n = length(valArr);
+k = zeros(n+1, W+1);
+for i = 1:n+1
+    for w = 1:W+1
+        if i == 1 || w == 1
+            k(i,w) = 0;
+        elseif wt(i-1) <= (w-1)
+            k(i,w) = max(valArr(i-1) + k(i-1,w - wt(i-1)), k(i-1, w));
+        else
+            k(i,w) = k(i-1, w);
+        end
+    end
+end
+maxVal = k(n+1, W+1);
+end
